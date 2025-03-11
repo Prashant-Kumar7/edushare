@@ -1,6 +1,5 @@
 import {
   ControlBar,
-  DisconnectButton,
   LiveKitRoom,
   ParticipantTile,
   RoomAudioRenderer,
@@ -21,80 +20,42 @@ export default function ClassRoom() {
   const [token, setToken] = useState("");
   const [showWhiteboard, setShowWhiteboard] = useState(true);
   const [showChat, setShowChat] = useState(true);
-  const [host, setHost] = useState(false)
-  const { socket ,sendMessage} = useWebSocket();
-  const [socketState, setSocketState] = useState<number>()
-  
-  
-  // const [hostCamVisible, setHostCamVisible] = useState(false)
-  const userTokenId = localStorage.getItem("user-token-id")
-
-  // useEffect(()=>{
-  //   console.log(socket?.readyState)
-    
-  // },[socket?.readyState])
-
-  useEffect(()=>{
-
-  },[])
-
-  useEffect(()=>{
-    if(socketState === 0){
-      console.log("connecting state")
-    }else if(socketState === 1){
-      console.log("open state")
-    }else if(socketState === 2){
-      console.log("closing state")
-    }else if(socketState === 3){
-      console.log("closed state")
-    }
-  },[socketState])
+  const [host, setHost] = useState(false);
+  const { sendMessage, addMessageListener } = useWebSocket();
 
   useEffect(() => {
-    const roomtoken = localStorage.getItem("room-token");
-    if (roomtoken) {
-      setToken(roomtoken);
+    const roomToken = localStorage.getItem("room-token");
+    if (roomToken) {
+      setToken(roomToken);
     }
-  }, [token]);
 
-  const CameraComponent = () => (
-    <div className="w-full h-48 bg-black rounded-lg overflow-hidden">
-      <CameraView />
-    </div>
-  );
-
-
-  if(socket){
-    const username = localStorage.getItem("user-token-id")
-    socket.onmessage = (event)=>{
-      const data = JSON.parse(event.data);
-
-      switch (data.type){
-        case "PARTICIPANTS":
-          console.log(data)
-          break;
-        case "HOST":
-          console.log(data)
-          if(data.username === username){
-            setHost(true)
-          }
+    const username = localStorage.getItem("user-token-id");
+    
+    const unsubscribeHost = addMessageListener("HOST", (data) => {
+      if (data.username === username) {
+        setHost(true);
       }
-    }
-  }
+    });
 
-  const sendEvent = ()=>{
-    console.log("live kit componet loaded")
-    // socket?.send(JSON.stringify({type : "JOIN_ROOM", roomId : roomId, userId : userTokenId}))
-    sendMessage(JSON.stringify({type : "JOIN_ROOM", roomId : roomId, userId : localStorage.getItem("user-token-id")}))
-  }
+    return () => {
+      unsubscribeHost();
+    };
+  }, [addMessageListener]);
 
-  const leaveClassRoom = ()=>{
-    console.log("you left the room")
-  }
+  const sendEvent = () => {
+    sendMessage(JSON.stringify({
+      type: "JOIN_ROOM",
+      roomId: roomId,
+      userId: localStorage.getItem("user-token-id")
+    }));
+  };
+
+  const leaveClassRoom = () => {
+    console.log("you left the room");
+  };
 
   return (
     <div className='w-full'>
-
       <LiveKitRoom
         video={true}
         audio={false}
@@ -115,7 +76,6 @@ export default function ClassRoom() {
                 <ScreenShareView />
               )}
 
-              {/* Floating camera view - only show when chat is not active */}
               {!showChat && (
                 <div className="absolute top-4 right-4 w-64 h-48 bg-black rounded-lg overflow-hidden">
                   <CameraView />
@@ -146,7 +106,6 @@ export default function ClassRoom() {
             </div>
           </div>
 
-          {/* Chat sidebar with camera on top when active */}
           {showChat && (
             <div className="w-80 flex flex-col">
               <div className="w-full h-48">
@@ -174,17 +133,17 @@ function CameraView() {
 
   return (
     <div className="h-full">
-      {tracks.map((track, index)=>{
-        if(track.participant.isCameraEnabled){
-
+      {tracks.map((track, index) => {
+        if (track.participant.isCameraEnabled) {
           return (
             <ParticipantTile
-            key={index}
-            trackRef={track}
-            style={{ width: '100%', height: '100%' }}
-          />
-          )
+              key={index}
+              trackRef={track}
+              style={{ width: '100%', height: '100%' }}
+            />
+          );
         }
+        return null;
       })}
     </div>
   );

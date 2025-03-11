@@ -2,10 +2,8 @@ import { useRef, useState, useEffect } from "react";
 import { useWebSocket } from "./WebSocketProvider";
 import { useParams } from "react-router-dom";
 
-
-
 interface DrawingProps {
-    host? : boolean
+    host?: boolean
 }
 
 export function DrawingCanvas({host}: DrawingProps) {
@@ -18,42 +16,36 @@ export function DrawingCanvas({host}: DrawingProps) {
     const [isErasing, setIsErasing] = useState(false);
     const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
 
-    const { socket, sendMessage } = useWebSocket();
+    const { sendMessage, addMessageListener } = useWebSocket();
 
-
-    if (socket){
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-
-            // if (!ctxRef.current) return;
-
-            switch (data.type) {
-                case "CLEAR_CANVAS":
-                    if (ctxRef.current && canvasRef.current) {
-                        ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-                        ctxRef.current.beginPath();
-                    }
-                    break;
-
-                case "START_DRAWING":
-                    ctxRef.current?.beginPath();
-                    ctxRef.current?.moveTo(data.x, data.y);
-                    break;
-
-                case "DRAW":
-                    drawOnCanvas(data.x, data.y, data.color, data.size);
-                    break;
-
-                case "STOP_DRAWING":
-                    ctxRef.current?.closePath();
-                    break;
+    useEffect(() => {
+        const unsubscribeClear = addMessageListener("CLEAR_CANVAS", () => {
+            if (ctxRef.current && canvasRef.current) {
+                ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+                ctxRef.current.beginPath();
             }
-        };
-    }
+        });
 
-    if(host){
-        
-    }
+        const unsubscribeStart = addMessageListener("START_DRAWING", (data) => {
+            ctxRef.current?.beginPath();
+            ctxRef.current?.moveTo(data.x, data.y);
+        });
+
+        const unsubscribeDraw = addMessageListener("DRAW", (data) => {
+            drawOnCanvas(data.x, data.y, data.color, data.size);
+        });
+
+        const unsubscribeStop = addMessageListener("STOP_DRAWING", () => {
+            ctxRef.current?.closePath();
+        });
+
+        return () => {
+            unsubscribeClear();
+            unsubscribeStart();
+            unsubscribeDraw();
+            unsubscribeStop();
+        };
+    }, [addMessageListener]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -68,6 +60,7 @@ export function DrawingCanvas({host}: DrawingProps) {
         }
     }, []);
 
+    // Rest of your component remains the same...
     const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
         if (!ctxRef.current || !host) return;
         const x = e.nativeEvent.offsetX;
@@ -76,17 +69,17 @@ export function DrawingCanvas({host}: DrawingProps) {
         ctxRef.current.beginPath();
         ctxRef.current.moveTo(x, y);
         setDrawing(true);
-        sendMessage(JSON.stringify({ type: "START_DRAWING", x, y, roomId : roomId }))
+        sendMessage(JSON.stringify({ type: "START_DRAWING", x, y, roomId }));
     };
 
     const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!drawing || !ctxRef.current || !socket || !host) return;
+        if (!drawing || !ctxRef.current || !host) return;
         const x = e.nativeEvent.offsetX;
         const y = e.nativeEvent.offsetY;
 
         const strokeColor = isErasing ? "#ffffff" : color;
         drawOnCanvas(x, y, strokeColor, size);
-        sendMessage(JSON.stringify({ type: "DRAW", x, y, color: strokeColor, size, roomId : roomId }))
+        sendMessage(JSON.stringify({ type: "DRAW", x, y, color: strokeColor, size, roomId }));
     };
 
     const stopDrawing = () => {
@@ -94,7 +87,7 @@ export function DrawingCanvas({host}: DrawingProps) {
             ctxRef.current.closePath();
         }
         setDrawing(false);
-        sendMessage(JSON.stringify({ type: "STOP_DRAWING" , roomId : roomId}))
+        sendMessage(JSON.stringify({ type: "STOP_DRAWING", roomId }));
     };
 
     const drawOnCanvas = (x: number, y: number, strokeColor: string, strokeSize: number) => {
@@ -110,7 +103,7 @@ export function DrawingCanvas({host}: DrawingProps) {
             ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
             ctxRef.current.beginPath();
         }
-        sendMessage(JSON.stringify({ type: "CLEAR_CANVAS" , roomId : roomId}))
+        sendMessage(JSON.stringify({ type: "CLEAR_CANVAS", roomId }));
     };
 
     const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -119,11 +112,9 @@ export function DrawingCanvas({host}: DrawingProps) {
 
     return (
         <div className="flex text-white flex-col bg-zinc-900 items-center relative">
-            
             <canvas 
                 ref={canvasRef} 
-                className="border-2  bg-white"
-                
+                className="border-2 bg-white"
                 onMouseDown={startDrawing} 
                 onMouseMove={(e) => {
                     draw(e);
@@ -148,7 +139,6 @@ export function DrawingCanvas({host}: DrawingProps) {
                 </button>
             </div>}
             
-            {/* Eraser cursor preview */}
             {isErasing && (
                 <div 
                     className="absolute rounded-full border border-gray-700 bg-gray-300 opacity-70 pointer-events-none" 
