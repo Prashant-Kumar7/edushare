@@ -18,7 +18,7 @@ export function SlidePresentation({ host, currentSlide, currentSlideState }: Sli
     const [isErasing, setIsErasing] = useState(false);
     const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
     const [currentPage, setCurrentPage] = useState(0);
-    const [pageStrokes, setPageStrokes] = useState<{ [key: number]: string }>({});
+    // const [pageStrokes, setPageStrokes] = useState<{ [key: number]: string }>({});
 
     const { sendMessage, addMessageListener } = useWebSocket();
 
@@ -30,14 +30,11 @@ export function SlidePresentation({ host, currentSlide, currentSlideState }: Sli
     ];
 
     useEffect(() => {
-        const unsubscribeClear = addMessageListener("CLEAR_SLIDE", (data) => {
+        const unsubscribeClear = addMessageListener("CLEAR_SLIDE", () => {
             if (ctxRef.current && canvasRef.current) {
                 ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
                 ctxRef.current.beginPath();
-                setPageStrokes(prev => ({
-                    ...prev,
-                    [data.page]: ""
-                }));
+                
             }
         });
 
@@ -185,10 +182,7 @@ export function SlidePresentation({ host, currentSlide, currentSlideState }: Sli
         if (ctxRef.current && canvasRef.current) {
             ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
             ctxRef.current.beginPath();
-            setPageStrokes(prev => ({
-                ...prev,
-                [currentPage]: ""
-            }));
+            
         }
         sendMessage(JSON.stringify({ 
             type: "CLEAR_SLIDE", 
