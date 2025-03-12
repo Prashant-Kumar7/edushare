@@ -13,7 +13,7 @@ const SignUp = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    axios.post("http://localhost:3000/api/v1/auth/signup", {email : email ,password: password, name: name, role: role}).then((res)=>{
+    axios.post("http://localhost:3000/api/v1/auth/signup", {email : email ,password: password, name: name, role: role}).then(()=>{
       // localStorage.setItem("token", res.data.token)
       navigate("/auth/signin")
     }).catch((err)=>{

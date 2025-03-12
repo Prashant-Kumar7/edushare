@@ -52,6 +52,41 @@ export class UserManager {
             const room = this.getRoom(message.roomId);
             room?.whiteboard(socket, message);
         });
+
+        this.messageHandlers.set("WHITEBOARD_STROCKS_STATE" , (socket, message)=>{
+            const room = this.getRoom(message.roomId);
+            room?.whiteboardStrocksState(socket,message)
+        })
+
+
+        this.messageHandlers.set("CHANGE_SLIDE_PAGE", (socket, message) => {
+            const room = this.getRoom(message.roomId);
+            room?.drawPageEvent(socket, message);
+        });
+
+
+        this.messageHandlers.set("CLEAR_SLIDE", (socket, message) => {
+            const room = this.getRoom(message.roomId);
+            room?.drawPageEvent(socket, message);
+        });
+
+
+        this.messageHandlers.set("STOP_SLIDE_DRAWING", (socket, message) => {
+            const room = this.getRoom(message.roomId);
+            room?.drawPageEvent(socket, message);
+        });
+
+
+        this.messageHandlers.set("DRAW_SLIDE", (socket, message) => {
+            const room = this.getRoom(message.roomId);
+            room?.drawPageEvent(socket, message);
+        });
+
+
+        this.messageHandlers.set("START_SLIDE_DRAWING", (socket, message) => {
+            const room = this.getRoom(message.roomId);
+            room?.drawPageEvent(socket, message);
+        });
     }
 
     joinRoom(message: string): void {

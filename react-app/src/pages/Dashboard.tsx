@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Users, LogOut, ConstructionIcon } from 'lucide-react';
+import { Plus, Users, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -11,7 +11,7 @@ interface Room {
 }
 
 const Dashboard = () => {
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  // const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [roomId, setRoomId] = useState("")
   const navigate = useNavigate();
@@ -185,14 +185,14 @@ const Dashboard = () => {
                 <button
                   type="button"
                   className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2"
-                  onClick={() => setShowCreateModal(false)}
+                  // onClick={() => setShowCreateModal(false)}
                 >
                   Create
                 </button>
                 <button
                   type="button"
                   className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1"
-                  onClick={() => setShowCreateModal(false)}
+                  // onClick={() => setShowCreateModal(false)}
                 >
                   Cancel
                 </button>

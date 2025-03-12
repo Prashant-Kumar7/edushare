@@ -1,9 +1,8 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 
 const WS_URL = "ws://localhost:8080"; // Replace with your WebSocket server URL
 
 interface WebSocketContextType {
-  socket: WebSocket | null;
   sendMessage: (message: string) => void;
   addMessageListener: (type: string, callback: (data: any) => void) => () => void;
 }
@@ -11,11 +10,13 @@ interface WebSocketContextType {
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
 
 export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [socket, setSocket] = useState<WebSocket | null>(null);
-  const [messageListeners, setMessageListeners] = useState<Map<string, Set<(data: any) => void>>>(new Map());
+  const socketRef = useRef<WebSocket | null>(null);
+  const messageListeners = useRef<Map<string, Set<(data: any) => void>>>(new Map());
+  const [, forceRender] = useState({}); // To trigger re-renders when needed
 
   useEffect(() => {
     const ws = new WebSocket(WS_URL);
+    socketRef.current = ws;
 
     ws.onopen = () => console.log("WebSocket Connected");
     ws.onclose = () => console.log("WebSocket Disconnected");
@@ -24,55 +25,48 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       try {
         const data = JSON.parse(event.data);
         const type = data.type;
-        
-        if (type && messageListeners.has(type)) {
-          messageListeners.get(type)?.forEach(callback => callback(data));
+
+        if (type && messageListeners.current.has(type)) {
+          messageListeners.current.get(type)?.forEach(callback => callback(data));
         }
       } catch (error) {
         console.error("Error processing WebSocket message:", error);
       }
     };
 
-    setSocket(ws);
-
     return () => {
       ws.close();
     };
-  }, [messageListeners]);
+  }, []);
 
   const sendMessage = useCallback((message: string) => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(message);
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(message);
     } else {
       console.error("WebSocket is not connected");
     }
-  }, [socket]);
+  }, []);
 
   const addMessageListener = useCallback((type: string, callback: (data: any) => void) => {
-    setMessageListeners(prev => {
-      const newMap = new Map(prev);
-      if (!newMap.has(type)) {
-        newMap.set(type, new Set());
-      }
-      newMap.get(type)?.add(callback);
-      return newMap;
-    });
+    if (!messageListeners.current.has(type)) {
+      messageListeners.current.set(type, new Set());
+    }
+    messageListeners.current.get(type)?.add(callback);
 
-    // Return cleanup function
+    // Force re-render to ensure components are aware of the updated listeners
+    forceRender({});
+
     return () => {
-      setMessageListeners(prev => {
-        const newMap = new Map(prev);
-        newMap.get(type)?.delete(callback);
-        if (newMap.get(type)?.size === 0) {
-          newMap.delete(type);
-        }
-        return newMap;
-      });
+      messageListeners.current.get(type)?.delete(callback);
+      if (messageListeners.current.get(type)?.size === 0) {
+        messageListeners.current.delete(type);
+      }
+      forceRender({});
     };
   }, []);
 
   return (
-    <WebSocketContext.Provider value={{ socket, sendMessage, addMessageListener }}>
+    <WebSocketContext.Provider value={{ sendMessage, addMessageListener }}>
       {children}
     </WebSocketContext.Provider>
   );

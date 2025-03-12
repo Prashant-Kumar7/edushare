@@ -4,9 +4,10 @@ import { useParams } from "react-router-dom";
 
 interface DrawingProps {
     host?: boolean
+    whiteboardState : string
 }
 
-export function DrawingCanvas({host}: DrawingProps) {
+export function DrawingCanvas({host, whiteboardState}: DrawingProps) {
     const { roomId } = useParams();
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -39,16 +40,23 @@ export function DrawingCanvas({host}: DrawingProps) {
             ctxRef.current?.closePath();
         });
 
+        const unsubscribeRoomState = addMessageListener("ROOM_STATE", (data) => {
+            loadPageStrokes(data.state.whiteboardStrocks)
+            console.log(data)
+        });
+
         return () => {
             unsubscribeClear();
             unsubscribeStart();
             unsubscribeDraw();
             unsubscribeStop();
+            unsubscribeRoomState();
         };
     }, [addMessageListener]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
+        // loadPageStrokes(pageStrokes)
         if (canvas) {
             canvas.width = window.innerWidth * 0.8;
             canvas.height = window.innerHeight * 0.8;
@@ -59,6 +67,10 @@ export function DrawingCanvas({host}: DrawingProps) {
             }
         }
     }, []);
+
+    useEffect(()=>{
+        loadPageStrokes(whiteboardState)
+    },[whiteboardState])
 
     // Rest of your component remains the same...
     const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -87,6 +99,7 @@ export function DrawingCanvas({host}: DrawingProps) {
             ctxRef.current.closePath();
         }
         setDrawing(false);
+        saveCanvasState()
         sendMessage(JSON.stringify({ type: "STOP_DRAWING", roomId }));
     };
 
@@ -110,10 +123,30 @@ export function DrawingCanvas({host}: DrawingProps) {
         setCursorPos({ x: e.clientX, y: e.clientY });
     };
 
+    const saveCanvasState = () => {
+        if (canvasRef.current) {
+            const imageData = canvasRef.current.toDataURL();
+            sendMessage(JSON.stringify({ type: "WHITEBOARD_STROCKS_STATE", roomId , payload : {strocks : imageData}}));
+
+        }
+    };
+
+    const loadPageStrokes = (strocks : string) => {
+        if (ctxRef.current && canvasRef.current) {
+            ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+            const img = new Image();
+            img.src = strocks;
+            img.onload = () => {
+                ctxRef.current?.drawImage(img, 0, 0);
+            };
+            
+        }
+    };
+
     return (
         <div className="flex text-white flex-col bg-zinc-900 items-center relative">
             <canvas 
-                ref={canvasRef} 
+                ref={canvasRef}
                 className="border-2 bg-white"
                 onMouseDown={startDrawing} 
                 onMouseMove={(e) => {

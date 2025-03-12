@@ -18,9 +18,9 @@ const serverUrl = 'wss://live-stream-j0ngkwts.livekit.cloud';
 export default function ClassRoom() {
   const { roomId } = useParams();
   const [token, setToken] = useState("");
-  const [showWhiteboard, setShowWhiteboard] = useState(true);
-  const [showChat, setShowChat] = useState(true);
+  const [showWhiteboard, setShowWhiteboard] = useState(false);
   const [host, setHost] = useState(false);
+  const [whiteboardState, setWhiteboardState] = useState("")
   const { sendMessage, addMessageListener } = useWebSocket();
 
   useEffect(() => {
@@ -37,8 +37,25 @@ export default function ClassRoom() {
       }
     });
 
+
+    const unsubscribeRoomState = addMessageListener("ROOM_STATE", (data) => {
+      setShowWhiteboard(data.state.isWhiteBoardActive)
+      setWhiteboardState(data.state.whiteboardStrocks)
+      console.log(data)
+    });
+
+    const unsubscribeWhiteboard = addMessageListener("WHITEBOARD_STATE", (data) => {
+      setShowWhiteboard(data.state.isWhiteBoardActive)
+      sendMessage(JSON.stringify({
+        type: "GET_ROOM_STATE",
+        roomId: roomId
+      }));
+    });
+
     return () => {
       unsubscribeHost();
+      unsubscribeWhiteboard()
+      unsubscribeRoomState()
     };
   }, [addMessageListener]);
 
@@ -53,6 +70,19 @@ export default function ClassRoom() {
   const leaveClassRoom = () => {
     console.log("you left the room");
   };
+
+  const Whiteboard = ()=>{
+    setShowWhiteboard(!showWhiteboard)
+    sendMessage(JSON.stringify({
+      type: "WHITEBOARD",
+      roomId: roomId,
+      payload : {
+        active : !showWhiteboard
+      }
+    }));
+  }
+
+  
 
   return (
     <div className='w-full'>
@@ -71,42 +101,29 @@ export default function ClassRoom() {
           <div className="flex-1 flex flex-col">
             <div className="flex-1 relative">
               {showWhiteboard ? (
-                <DrawingCanvas host={host} />
+                <DrawingCanvas host={host} whiteboardState={whiteboardState} />
               ) : (
                 <ScreenShareView />
-              )}
-
-              {!showChat && (
-                <div className="absolute top-4 right-4 w-64 h-48 bg-black rounded-lg overflow-hidden">
-                  <CameraView />
-                </div>
               )}
             </div>
 
             <div className="h-16 bg-zinc-800 flex items-center px-4 gap-4">
-              <button
-                onClick={() => setShowWhiteboard(!showWhiteboard)}
+              {host && <button
+                onClick={Whiteboard}
                 className={`px-4 py-2 rounded ${
                   showWhiteboard ? 'bg-blue-600' : 'bg-zinc-700'
                 } text-white`}
               >
                 Whiteboard
-              </button>
-              <button
-                onClick={() => setShowChat(!showChat)}
-                className={`px-4 py-2 rounded ${
-                  showChat ? 'bg-blue-600' : 'bg-zinc-700'
-                } text-white`}
-              >
-                Chat
-              </button>
+              </button>}
+              
               <div className="flex-1">
                 <ControlBar/>
               </div>
             </div>
           </div>
 
-          {showChat && (
+          {true && (
             <div className="w-80 flex flex-col">
               <div className="w-full h-48">
                 <CameraView />

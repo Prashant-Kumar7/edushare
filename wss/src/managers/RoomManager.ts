@@ -44,15 +44,26 @@ export class RoomManager {
 
         socket.send(JSON.stringify({ type: "HOST", username: this.host.username }));
         this.participants[username] = socket;
-
         this.broadcastToAll({
-            type: "PARTICIPANTS",
-            participants: this.usernames,
-            username: username
-        });
+            type: "ROOM_STATE",
+            state: this.roomState,
+            // username: username
+        })
+        // this.broadcastToAll({
+        //     type: "PARTICIPANTS",
+        //     participants: this.usernames,
+        //     username: username
+        // });
     }
 
     drawEvent(socket: WebSocket, message: WebSocketMessage): void {
+        if(message.type === "CLEAR_CANVAS"){
+            this.roomState.whiteboardStrocks = ""
+        }
+        this.broadcastToOthers(socket, message);
+    }
+
+    drawPageEvent(socket: WebSocket, message: WebSocketMessage): void {
         this.broadcastToOthers(socket, message);
     }
 
@@ -84,6 +95,13 @@ export class RoomManager {
         }
     }
 
+    whiteboardStrocksState(socket : WebSocket, message : WebSocketMessage) : void{
+        if (socket === this.host.socket) {
+            // console.log(message.payload.strocks)
+            this.roomState.whiteboardStrocks = message.payload.strocks;
+        }
+    }
+
     private broadcastToAll(message: any): void {
         const messageStr = JSON.stringify(message);
         this.usernames.forEach(user => {
@@ -93,6 +111,7 @@ export class RoomManager {
             }
         });
     }
+
 
     private broadcastToOthers(excludeSocket: WebSocket, message: any): void {
         const messageStr = JSON.stringify(message);
