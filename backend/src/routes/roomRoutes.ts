@@ -72,7 +72,6 @@ router.post("/create-room", verifyTokenMiddleware, async (req: Request, res: Res
     const roomToken = await generateHostToken(roomId, id);
 
     await client.lPush("room", JSON.stringify({ type: "CREATE", roomId: roomId, roomToken, processId, userId : id}));
-    console.log()
     res.json({ roomToken, roomId: roomId, userId:id});
 });
 
