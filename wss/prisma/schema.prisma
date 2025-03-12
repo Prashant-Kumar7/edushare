@@ -18,7 +18,7 @@ model User {
   name        String  
   password    String
   email       String  @unique()
-  role        Role
+  role        String
 }
 
 enum Role {
@@ -37,10 +37,17 @@ enum Role {
 // }
 
 
+model UserRoomManager {
+  id          String  @id @default(uuid())
+  userId      String
+  roomId      String
+  user        Room    @relation(fields: [roomId] , references: [id])
+}
+
+
 model Room {
-  roomId      String    @id
-  videoId     String    @unique()
-  lower       String    @unique()
-  medium      String    @unique()
-  higher      String    @unique()
+  id      String    @id
+  name    String  
+  description String
+  userRoomManager  UserRoomManager[]
 }

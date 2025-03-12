@@ -63,7 +63,13 @@ export class RoomManager {
         this.broadcastToOthers(socket, message);
     }
 
-    drawPageEvent(socket: WebSocket, message: WebSocketMessage): void {
+    drawPageEvent(socket: WebSocket, message: any): void {
+        if(message.type === "CHANGE_SLIDE_PAGE"){
+            this.roomState.currentPage = message.page
+        }
+        if(message.type === "CLEAR_SLIDE"){
+            this.roomState.pageStrocksState[this.roomState.currentPage] = ""
+        }
         this.broadcastToOthers(socket, message);
     }
 
@@ -95,10 +101,33 @@ export class RoomManager {
         }
     }
 
+
+    slides(socket: WebSocket, message: WebSocketMessage): void {
+        if (socket === this.host.socket && typeof message.payload?.active === 'boolean') {
+            this.roomState.isPptActive = message.payload.active;
+            if (this.roomState.isPptActive) {
+                this.roomState.isWhiteBoardActive = false;
+                this.roomState.isScreenShareActive = false;
+            }
+            this.broadcastToAll({
+                type: "SLIDES_STATE",
+                state: this.roomState
+            });
+        }
+    }
+
     whiteboardStrocksState(socket : WebSocket, message : WebSocketMessage) : void{
         if (socket === this.host.socket) {
             // console.log(message.payload.strocks)
             this.roomState.whiteboardStrocks = message.payload.strocks;
+        }
+    }
+
+
+    PageStrocksState(socket : WebSocket, message : WebSocketMessage) : void{
+        if (socket === this.host.socket) {
+            // console.log(message.payload.strocks)
+            this.roomState.pageStrocksState[message.payload.currentPage] = message.payload.strocks;
         }
     }
 

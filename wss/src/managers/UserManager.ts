@@ -53,11 +53,20 @@ export class UserManager {
             room?.whiteboard(socket, message);
         });
 
+        this.messageHandlers.set("SLIDES", (socket, message) => {
+            const room = this.getRoom(message.roomId);
+            room?.slides(socket, message);
+        });
+
         this.messageHandlers.set("WHITEBOARD_STROCKS_STATE" , (socket, message)=>{
             const room = this.getRoom(message.roomId);
             room?.whiteboardStrocksState(socket,message)
         })
 
+        this.messageHandlers.set("PAGE_STROCKS_STATE" , (socket, message)=>{
+            const room = this.getRoom(message.roomId);
+            room?.PageStrocksState(socket,message)
+        })
 
         this.messageHandlers.set("CHANGE_SLIDE_PAGE", (socket, message) => {
             const room = this.getRoom(message.roomId);

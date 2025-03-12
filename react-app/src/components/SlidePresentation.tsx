@@ -4,9 +4,11 @@ import { useParams } from "react-router-dom";
 
 interface SlidePresentationProps {
     host?: boolean;
+    currentSlide : number;
+    currentSlideState : string
 }
 
-export function SlidePresentation({ host }: SlidePresentationProps) {
+export function SlidePresentation({ host, currentSlide, currentSlideState }: SlidePresentationProps) {
     const { roomId } = useParams();
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -56,7 +58,7 @@ export function SlidePresentation({ host }: SlidePresentationProps) {
 
         const unsubscribeChangePage = addMessageListener("CHANGE_SLIDE_PAGE", (data) => {
             setCurrentPage(data.page);
-            loadPageStrokes(data.page);
+            // loadPageStrokes(data.page);
         });
 
         return () => {
@@ -77,33 +79,51 @@ export function SlidePresentation({ host }: SlidePresentationProps) {
             if (ctx) {
                 ctx.lineCap = "round";
                 ctxRef.current = ctx;
-                loadPageStrokes(currentPage);
+                // loadPageStrokes(currentPage);
             }
         }
     }, []);
 
+    useEffect(()=>{
+        setCurrentPage(currentSlide)
+    },[currentSlide])
+
+
+    useEffect(()=>{
+        loadPageStrokes(currentSlideState)
+    },[currentSlideState])
+
     const saveCanvasState = () => {
         if (canvasRef.current) {
             const imageData = canvasRef.current.toDataURL();
-            setPageStrokes(prev => ({
-                ...prev,
-                [currentPage]: imageData
-            }));
+            sendMessage(JSON.stringify({ type: "PAGE_STROCKS_STATE", roomId , payload : {strocks : imageData, currentPage }}));
         }
     };
 
-    const loadPageStrokes = (page: number) => {
+    const loadPageStrokes = (strocks : string) => {
         if (ctxRef.current && canvasRef.current) {
             ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-            if (pageStrokes[page]) {
-                const img = new Image();
-                img.src = pageStrokes[page];
-                img.onload = () => {
-                    ctxRef.current?.drawImage(img, 0, 0);
-                };
-            }
+            const img = new Image();
+            img.src = strocks;
+            img.onload = () => {
+                ctxRef.current?.drawImage(img, 0, 0);
+            };
+            
         }
     };
+
+    // const loadPageStrokes = (page: number) => {
+    //     if (ctxRef.current && canvasRef.current) {
+    //         ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    //         if (pageStrokes[page]) {
+    //             const img = new Image();
+    //             img.src = pageStrokes[page];
+    //             img.onload = () => {
+    //                 ctxRef.current?.drawImage(img, 0, 0);
+    //             };
+    //         }
+    //     }
+    // };
 
     const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
         if (!ctxRef.current || !host) return;
@@ -184,12 +204,17 @@ export function SlidePresentation({ host }: SlidePresentationProps) {
     const changePage = (newPage: number) => {
         if (newPage >= 0 && newPage < slides.length && host) {
             setCurrentPage(newPage);
+            if(ctxRef.current && canvasRef.current){
+
+                ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+                ctxRef.current.beginPath();
+            }
             sendMessage(JSON.stringify({ 
                 type: "CHANGE_SLIDE_PAGE", 
                 roomId,
                 page: newPage 
             }));
-            loadPageStrokes(newPage);
+            // loadPageStrokes(newPage);
         }
     };
 

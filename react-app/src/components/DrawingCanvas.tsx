@@ -41,8 +41,8 @@ export function DrawingCanvas({host, whiteboardState}: DrawingProps) {
         });
 
         const unsubscribeRoomState = addMessageListener("ROOM_STATE", (data) => {
-            loadPageStrokes(data.state.whiteboardStrocks)
-            console.log(data)
+            // loadPageStrokes(data.state.whiteboardStrocks)
+            // console.log(data)
         });
 
         return () => {
