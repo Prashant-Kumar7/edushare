@@ -7,12 +7,14 @@ import {
 } from '@livekit/components-react';
 import '@livekit/components-styles';
 import { Track } from 'livekit-client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { DrawingCanvas } from '../components/DrawingCanvas';
 import { ChatRoom } from '../components/chatRoom';
 import { useWebSocket } from '../components/WebSocketProvider';
 import { SlidePresentation } from '../components/SlidePresentation';
+import axios from 'axios';
+import { Upload } from 'lucide-react';
 
 const serverUrl = 'wss://live-stream-j0ngkwts.livekit.cloud';
 
@@ -26,6 +28,8 @@ export default function ClassRoom() {
   const [currentPageState, setCurrentPageState] = useState("")
   const { sendMessage, addMessageListener } = useWebSocket();
   const [currentPage, setCurrentPage] = useState<number>(0)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [slidesUrl,setSlidesUrl] = useState<string[]>([])
 
   useEffect(() => {
     const roomToken = localStorage.getItem("room-token");
@@ -47,6 +51,7 @@ export default function ClassRoom() {
       setWhiteboardState(data.state.whiteboardStrocks)
       setCurrentPage(data.state.currentPage)
       setShowSlides(data.state.isPptActive)
+      setSlidesUrl(data.state.listOfPages)
       // const pageState = data.state.pageStrocksState[data.state.currentPage]
       setCurrentPageState(data.state.pageStrocksState[data.state.currentPage] || "")
       console.log(data)
@@ -62,6 +67,22 @@ export default function ClassRoom() {
     });
 
 
+    const unsubscribeReciveSlides = addMessageListener("RECIVE_SLIDES", (data) => {
+      setSlidesUrl(data.slides)
+      console.log("uploaded")
+      // setShowWhiteboard(data.state.isWhiteBoardActive)
+      // setShowSlides(data.state.isPptActive)
+      
+    });
+
+
+    const unsubscribenewSlide = addMessageListener("NEW_PAGE_STATE", (data) => {      
+      setCurrentPage(data.state.currentPage)
+      setSlidesUrl(data.state.listOfPages)
+      // const pageState = data.state.pageStrocksState[data.state.currentPage]
+      setCurrentPageState(data.state.pageStrocksState[data.state.currentPage] || "")
+    });
+
     const unsubscribeSlides = addMessageListener("SLIDES_STATE", (data) => {
       setShowSlides(data.state.isPptActive)
       setShowWhiteboard(data.state.isWhiteBoardActive)
@@ -76,6 +97,8 @@ export default function ClassRoom() {
       unsubscribeWhiteboard()
       unsubscribeRoomState()
       unsubscribeSlides()
+      unsubscribeReciveSlides()
+      unsubscribenewSlide()
     };
   }, [addMessageListener]);
 
@@ -115,6 +138,36 @@ export default function ClassRoom() {
   }
 
   
+  const handleClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        axios.post("http://localhost:3000/api/v1/file/upload", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+                "Authorization": `Bearer ${localStorage.getItem("token")}`
+            },
+        }).then((res)=>{
+          // setSlidesUrl(res.data.images)
+          sendMessage(JSON.stringify({
+            type: "SEND_SLIDES",
+            roomId: roomId,
+            slides : res.data.images
+          }));
+          console.log(res.data.images)
+        }).catch((err)=>{
+          console.log(err)
+        }).finally(()=>{
+          slides()
+        })
+      
+    }
+  }
 
   return (
     <div className='w-full'>
@@ -135,7 +188,7 @@ export default function ClassRoom() {
               {showWhiteboard ? (
                 <DrawingCanvas host={host} whiteboardState={whiteboardState} />
               ) : showSlides ? (
-                <SlidePresentation host={host} currentSlide={currentPage} currentSlideState={currentPageState}/>
+                <SlidePresentation slides={slidesUrl} host={host} currentSlide={currentPage} currentSlideState={currentPageState}/>
               ) : (
                 <ScreenShareView />
               )}
@@ -158,6 +211,25 @@ export default function ClassRoom() {
               >
                 Slides
               </button>}
+              {host && <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    // accept=".pdf, .ppt, .pptx, .doc, .docx"
+                    accept=".pdf"
+                    className="hidden"
+                />
+
+                <button
+                    onClick={handleClick}
+                    className={`px-4 py-2 rounded ${
+                      true ? 'bg-blue-600' : 'bg-zinc-700'
+                    } text-white`}
+                >
+                    <Upload className="mr-2 h-4 w-4" /> Upload Slides
+                </button>
+              </div>}
               <div className="flex-1">
                 <ControlBar/>
               </div>

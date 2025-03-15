@@ -6,16 +6,17 @@ interface SlidePresentationProps {
     host?: boolean;
     currentSlide : number;
     currentSlideState : string
+    slides : string[]
 }
 
-export function SlidePresentation({ host, currentSlide, currentSlideState }: SlidePresentationProps) {
+export function SlidePresentation({ host, currentSlide, currentSlideState, slides }: SlidePresentationProps) {
     const { roomId } = useParams();
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
     const [drawing, setDrawing] = useState(false);
     const [color, setColor] = useState("#000000");
     const [size, setSize] = useState(5);
-    const [isErasing, setIsErasing] = useState(false);
+    // const [isErasing, setIsErasing] = useState(false);
     const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
     const [currentPage, setCurrentPage] = useState(0);
     // const [pageStrokes, setPageStrokes] = useState<{ [key: number]: string }>({});
@@ -23,11 +24,7 @@ export function SlidePresentation({ host, currentSlide, currentSlideState }: Sli
     const { sendMessage, addMessageListener } = useWebSocket();
 
     // Example slides - in production these would come from your backend
-    const slides = [
-        "https://images.unsplash.com/photo-1516383740770-fbcc5ccbece0?q=80&w=1920",
-        "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?q=80&w=1920",
-        "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?q=80&w=1920"
-    ];
+    
 
     useEffect(() => {
         const unsubscribeClear = addMessageListener("CLEAR_SLIDE", () => {
@@ -144,7 +141,7 @@ export function SlidePresentation({ host, currentSlide, currentSlideState }: Sli
         const x = e.nativeEvent.offsetX;
         const y = e.nativeEvent.offsetY;
 
-        const strokeColor = isErasing ? "#ffffff" : color;
+        const strokeColor = color;
         drawOnCanvas(x, y, strokeColor, size);
         sendMessage(JSON.stringify({ 
             type: "DRAW_SLIDE", 
@@ -212,6 +209,18 @@ export function SlidePresentation({ host, currentSlide, currentSlideState }: Sli
         }
     };
 
+    const handleAddingNewPages = ()=>{
+        console.log("new page button clicked")
+        sendMessage(JSON.stringify({ 
+            type: "ADD_NEW_SLIDE", 
+            roomId,
+            currentPage  
+        }));
+    }
+
+
+    
+
     return (
         <div className="flex text-white flex-col bg-zinc-900 items-center relative">
             <div className="relative">
@@ -223,6 +232,9 @@ export function SlidePresentation({ host, currentSlide, currentSlideState }: Sli
                         width: canvasRef.current?.width,
                         height: canvasRef.current?.height 
                     }}
+                    // loading={}
+                    onLoad={()=>console.log("image loaded")}
+                    onLoadStart={()=>console.log("loading image")}
                 />
                 <canvas 
                     ref={canvasRef} 
@@ -264,7 +276,7 @@ export function SlidePresentation({ host, currentSlide, currentSlideState }: Sli
                             type="color" 
                             value={color} 
                             onChange={(e) => setColor(e.target.value)} 
-                            disabled={isErasing} 
+                            // disabled={isErasing} 
                         />
                         <label className="ml-4">Size: </label>
                         <input 
@@ -283,25 +295,20 @@ export function SlidePresentation({ host, currentSlide, currentSlideState }: Sli
                         Clear
                     </button>
 
-                    <button 
+                    {/* <button 
                         onClick={() => setIsErasing(!isErasing)} 
                         className={`px-3 py-1 rounded ${isErasing ? "bg-gray-500" : "bg-yellow-500 text-black"}`}
                     >
                         {isErasing ? "Drawing Mode" : "Eraser"}
-                    </button>
+                    </button> */}
+
+                    {/* <button 
+                        onClick={handleAddingNewPages} 
+                        className={`px-3 py-1 rounded bg-green-600 text-black`}
+                    >
+                        Add Slide
+                    </button> */}
                 </div>
-            )}
-            
-            {isErasing && (
-                <div 
-                    className="absolute rounded-full border border-gray-700 bg-gray-300 opacity-70 pointer-events-none" 
-                    style={{
-                        width: size,
-                        height: size,
-                        top: cursorPos.y - size / 2,
-                        left: cursorPos.x - size / 2,
-                    }}
-                />
             )}
         </div>
     );

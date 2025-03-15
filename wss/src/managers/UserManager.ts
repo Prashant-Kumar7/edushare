@@ -1,6 +1,7 @@
 import { WebSocket } from 'ws';
 import { RoomManager } from './RoomManager';
 import { WebSocketMessage, MessageHandler } from '../types';
+import {client} from "../index"
 
 export class UserManager {
     private rooms: RoomManager[];
@@ -68,6 +69,17 @@ export class UserManager {
             room?.PageStrocksState(socket,message)
         })
 
+
+        this.messageHandlers.set("SEND_SLIDES" , (socket, message)=>{
+            const room = this.getRoom(message.roomId);
+            room?.reciveSlides(message)
+        })
+
+        this.messageHandlers.set("ADD_NEW_SLIDE" , (socket, message)=>{
+            const room = this.getRoom(message.roomId);
+            room?.addNewSlide(message)
+        })
+
         this.messageHandlers.set("CHANGE_SLIDE_PAGE", (socket, message) => {
             const room = this.getRoom(message.roomId);
             room?.drawPageEvent(socket, message);
@@ -98,19 +110,21 @@ export class UserManager {
         });
     }
 
-    joinRoom(message: string): void {
+    async joinRoom(message: string):Promise<void> {
         const parsedMessage = JSON.parse(message);
         const userId: string = parsedMessage.userId;
         const room = this.getRoom(parsedMessage.roomId);
         room?.joinHttp(userId);
+        await client.lPush(parsedMessage.processId, "JOINED");
     }
 
-    createRoom(message: string): void {
+    async createRoom(message: string):Promise<void> {
         const parsedMessage = JSON.parse(message);
         const userId: string = parsedMessage.userId;
         const room = new RoomManager(parsedMessage.roomId, userId);
         this.rooms.push(room);
         room.joinHttp(userId);
+        await client.lPush(parsedMessage.processId, "CREATED");
     }
 
     addUser(socket: WebSocket): void {

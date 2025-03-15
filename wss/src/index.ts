@@ -11,7 +11,7 @@ const httpServer = app.listen(8080);
 const wss = new WebSocketServer({ server: httpServer });
 const users = new UserManager();
 
-const client = createClient({
+export const client = createClient({
     username: 'default',
     password: process.env.REDIS_PASSWORD,
     socket: {
@@ -49,10 +49,10 @@ async function startQueue() {
                     
                     switch (parsedMessage.type) {
                         case "JOIN":
-                            users.joinRoom(submission.element);
+                            await users.joinRoom(submission.element);
                             break;
                         case "CREATE":
-                            users.createRoom(submission.element);
+                            await users.createRoom(submission.element);
                             break;
                         default:
                             console.warn("Unhandled Redis message type:", parsedMessage.type);

@@ -72,6 +72,8 @@ router.post("/create-room", verifyTokenMiddleware, async (req: Request, res: Res
     const roomToken = await generateHostToken(roomId, id);
 
     await client.lPush("room", JSON.stringify({ type: "CREATE", roomId: roomId, roomToken, processId, userId : id}));
+    // await client.brPop(processId, 0);
+
     res.json({ roomToken, roomId: roomId, userId:id});
 });
 
@@ -94,6 +96,7 @@ router.post("/join-room", async (req: Request, res: Response) => {
     const roomToken = await generateReceiveOnlyToken(roomId, id);
 
     await client.lPush("room", JSON.stringify({ type: "JOIN", roomId: roomId, roomToken, processId, userId : id}));
+    // await client.brPop(processId, 0);
 
 
     res.json({ roomToken, roomId, userId:id });

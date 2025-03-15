@@ -8,9 +8,11 @@ export class RoomManager {
     private host: Host;
     private usernames: string[];
     private messages: string[];
+    private newSlide : string
 
     constructor(roomId: string, hostName: string) {
         this.participants = {};
+        this.newSlide = "https://csv-upload-22990.s3.ap-south-1.amazonaws.com/blank-white-7sn5o1woonmklx1h.jpg"
         this.roomId = roomId;
         this.usernames = [];
         this.host = {
@@ -129,6 +131,45 @@ export class RoomManager {
             // console.log(message.payload.strocks)
             this.roomState.pageStrocksState[message.payload.currentPage] = message.payload.strocks;
         }
+    }
+
+    reciveSlides(message : any){
+
+        this.roomState.listOfPages = message.slides
+        this.broadcastToAll({
+            type : "RECIVE_SLIDES",
+            slides : this.roomState.listOfPages
+        })
+    }
+
+
+    addNewSlide(message : any){
+        console.log(message)
+        this.roomState.listOfPages.splice(this.roomState.currentPage+1 , 0 ,this.newSlide)
+        
+        var newStateOfPgaes : {[key : number] : string} = {};
+        newStateOfPgaes = {
+            ...this.roomState.pageStrocksState,
+            [this.roomState.currentPage + 1] : "" 
+        }
+        for (let index = this.roomState.currentPage + 2; index < this.roomState.listOfPages.length; index++) {
+            newStateOfPgaes = {
+                ...newStateOfPgaes,
+                [index] : this.roomState.pageStrocksState[index-1]
+            }
+        }
+
+        
+        
+        this.roomState.pageStrocksState = {
+            ...newStateOfPgaes
+        }
+        this.roomState.currentPage = this.roomState.currentPage + 1
+        console.log(this.roomState)
+        this.broadcastToAll({
+            type : "NEW_PAGE_STATE",
+            state : this.roomState
+        })
     }
 
     private broadcastToAll(message: any): void {
