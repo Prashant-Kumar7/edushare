@@ -216,8 +216,8 @@ export default function ClassRoom() {
                     type="file"
                     ref={fileInputRef}
                     onChange={handleFileChange}
-                    // accept=".pdf, .ppt, .pptx, .doc, .docx"
-                    accept=".pdf"
+                    accept=".pdf, .ppt, .pptx, .doc, .docx"
+                    // accept=".pdf"
                     className="hidden"
                 />
 

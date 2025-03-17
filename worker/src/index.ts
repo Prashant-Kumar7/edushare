@@ -42,8 +42,24 @@ async function StartQueue(){
                 console.log("Waiting for files...");
                 const submission = await client.brPop("upload-queue", 0);
                 // Blocking pop
+                var downloadedFile = "";
+                var fileType = "";
                 if (!submission) continue;
                 const file: { key: string; bucket: string; name: string; fileKey :string; processId : string } = JSON.parse(submission.element);
+                if(file.name.includes("ppt")){
+                    downloadedFile = "./downloaded-file.ppt"
+                    fileType = "ppt"
+                }else if(file.name.includes("pdf")){
+                    downloadedFile = "./downloaded-file.pdf"
+                    fileType = "pdf"
+                }else if(file.name.includes("doc")){
+                    downloadedFile = "./downloaded-file.doc"
+                    fileType = "doc"
+                }else{
+                  console.log("file not supported")
+                  await client.lPush(file.processId, JSON.stringify({images : []}))
+                  continue
+                }
                 const params = { Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file.key };
                 const command = new GetObjectCommand(params);
                 const outputDir = "./output/"
@@ -56,7 +72,7 @@ async function StartQueue(){
             
                 const bodyStream = response.Body as Readable;
             
-                const fileStream = fs.createWriteStream("./downloaded-file.pdf");
+                const fileStream = fs.createWriteStream(downloadedFile);
             
                 // Pipe the stream to a file
                 await new Promise<void>((resolve, reject) => {
@@ -65,14 +81,14 @@ async function StartQueue(){
                   fileStream.on("finish", resolve);
                 });
             
-                console.log(`PDF downloaded to ${"./downloaded-file.pdf"}`);
+                console.log(`${fileType} downloaded to ${downloadedFile}`);
             
                 if (!fs.existsSync(outputDir)) {
                   fs.mkdirSync(outputDir, { recursive: true });
                 }
             
                 // Convert PDF to JPG
-                const result = await convertapi.convert('jpg', { File: "./downloaded-file.pdf" }, 'pdf');
+                const result = await convertapi.convert('jpg', { File: downloadedFile}, fileType);
             
                 console.log('Conversion successful! Downloading files...');
                 const lengthOfPdf = result.files.length
@@ -105,11 +121,11 @@ async function StartQueue(){
                   console.error('Error uploading folder:', error);
                 }
             
-                await deleteFile()
+                await deleteFile(downloadedFile)
                 const data =  imageUrl(lengthOfPdf , file.fileKey)
             
                 await client.lPush(file.processId, JSON.stringify({images : data}))
-                console.log("pdf is converted to images")
+                console.log(fileType+" is converted to images")
                 
 
             } catch (error) {
@@ -176,12 +192,12 @@ async function uploadFolderToS3(bucketName: string, folderPath: string, s3Folder
   
   // Example usage
   
-async function deleteFile() {
+async function deleteFile(downloadedFile :string) {
     try {
-        await fsPromises.unlink('./downloaded-file.pdf');
-        console.log(`Deleted file: ${'./downloaded-file.pdf'}`);
+        await fsPromises.unlink(downloadedFile);
+        console.log(`Deleted file: ${downloadedFile}`);
     } catch (error) {
-        console.error(`Error deleting file: ${"./downloaded-file.pdf"}`, error);
+        console.error(`Error deleting file: ${downloadedFile}`, error);
     }
   
     try {
@@ -194,4 +210,3 @@ async function deleteFile() {
   
   
 
-  
