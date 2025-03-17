@@ -33,12 +33,12 @@ async function StartQueue(){
     try {
         await client.connect();
         console.log("connected to Redis.");
+        const convertapi = new ConvertAPI.ConvertAPI(process.env.CONVERT_API_KEY || "")
+        const bucketName = process.env.AWS_S3_BUCKET_NAME || ""; // Replace with your S3 bucket name
   
         // Main loop
         while (true) {
             try {
-                const convertapi = new ConvertAPI.ConvertAPI(process.env.CONVERT_API_KEY || "")
-                const bucketName = process.env.AWS_S3_BUCKET_NAME || ""; // Replace with your S3 bucket name
                 console.log("Waiting for files...");
                 const submission = await client.brPop("upload-queue", 0);
                 // Blocking pop
