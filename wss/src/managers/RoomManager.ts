@@ -36,6 +36,14 @@ export class RoomManager {
             ...this.participants,
             [username]: null
         };
+
+        const found = this.usernames.find((name)=>{
+            return name === username
+        })
+
+        if(found){
+            return;
+        }
         this.usernames.push(username);
     }
 
@@ -51,11 +59,11 @@ export class RoomManager {
             state: this.roomState,
             // username: username
         })
-        // this.broadcastToAll({
-        //     type: "PARTICIPANTS",
-        //     participants: this.usernames,
-        //     username: username
-        // });
+        this.broadcastToAll({
+            type: "PARTICIPANTS",
+            participants: this.usernames,
+            username: username
+        });
     }
 
     drawEvent(socket: WebSocket, message: WebSocketMessage): void {
