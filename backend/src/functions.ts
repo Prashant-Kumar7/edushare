@@ -26,12 +26,7 @@ export const s3 = new S3Client({
 export const s3Client = new S3Client({ region: process.env.AWS_REGION });
 
 export const client = createClient({
-  username: 'default',
-  password: process.env.REDIS_PASSWORD,
-  socket: {
-      host: process.env.REDIS_HOST,
-      port: 13642
-  }
+  url: process.env.REDIS_URL
 });
 
 export const getPublicUrl = (key: string) => {

@@ -11,13 +11,8 @@ import { createClient } from "redis";
 
 dotenv.config();
 
-const client = createClient({
-    username: 'default',
-    password: process.env.REDIS_PASSWORD,
-    socket: {
-        host: process.env.REDIS_HOST,
-        port: 13642
-    }
+export const client = createClient({
+  url: process.env.REDIS_URL
 });
 
 const s3 = new S3Client({

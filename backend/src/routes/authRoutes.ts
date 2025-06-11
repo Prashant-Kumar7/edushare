@@ -12,7 +12,7 @@ const userSignupSchema = z.object({
     email: z.string().email(),
     password: z.string().min(6),
     name: z.string(),
-    role : z.string(),
+    role: z.string(),
 });
 
 router.post("/signup", async (req: Request, res: Response) => {
@@ -27,7 +27,7 @@ router.post("/signup", async (req: Request, res: Response) => {
 
     try {
         const user = await prisma.user.findUnique({
-            where: {email : body.email }
+            where: { email: body.email }
         });
 
         if (user) {
@@ -40,7 +40,7 @@ router.post("/signup", async (req: Request, res: Response) => {
                 name: body.name,
                 password: hashPassword,
                 email: body.email,
-                role : role
+                role: role
             }
         });
 
@@ -81,8 +81,40 @@ router.post("/signin", async (req: Request, res: Response) => {
 });
 
 
-router.get("/user", verifyTokenMiddleware, (req : Request, res : Response)=>{
-    res.status(200).json("authorized")
+router.get("/user", verifyTokenMiddleware, async (req: Request, res: Response) => {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader?.split(" ")[1];
+    const decoded = jwt.verify(token || "", secretKey) as string;
+    const user = await prisma.user.findUnique({
+        where: {
+            id: decoded
+        },
+        select: {
+            role: true,
+            name: true
+        }
+    })
+
+    const userRoomData = await prisma.userRoomManager.findMany({
+        where: {
+            userId: decoded as string
+        },
+        select: {
+            room: {
+                select: {
+                    name: true,
+                    description: true,
+                    id: true
+                }
+            }
+        }
+    })
+
+    res.status(200).json({
+        message: "authorized",
+        user,
+        rooms : userRoomData
+    })
 })
 
 export default router;

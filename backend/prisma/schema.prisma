@@ -41,7 +41,8 @@ model UserRoomManager {
   id          String  @id @default(uuid())
   userId      String
   roomId      String
-  user        Room    @relation(fields: [roomId] , references: [id])
+  roomToken   String  @unique
+  room        Room    @relation(fields: [roomId] , references: [id])
 }
 
 

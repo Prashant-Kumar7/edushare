@@ -1,5 +1,7 @@
 import {
   ControlBar,
+  DisconnectButton,
+  LeaveIcon,
   LiveKitRoom,
   ParticipantTile,
   RoomAudioRenderer,
@@ -8,13 +10,14 @@ import {
 import '@livekit/components-styles';
 import { Track } from 'livekit-client';
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { DrawingCanvas } from '../components/DrawingCanvas';
 import { ChatRoom } from '../components/chatRoom';
 import { useWebSocket } from '../components/WebSocketProvider';
 import { SlidePresentation } from '../components/SlidePresentation';
 import axios from 'axios';
 import { Upload } from 'lucide-react';
+import "../App.css"
 
 const serverUrl = 'wss://live-stream-j0ngkwts.livekit.cloud';
 
@@ -30,6 +33,7 @@ export default function ClassRoom() {
   const [currentPage, setCurrentPage] = useState<number>(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [slidesUrl,setSlidesUrl] = useState<string[]>([])
+  const navigate = useNavigate();
 
   useEffect(() => {
     const roomToken = localStorage.getItem("room-token");
@@ -92,7 +96,12 @@ export default function ClassRoom() {
       }));
     });
 
+    const unsubscribeCloseRoom = addMessageListener("ROOM_CLOSED", (data) => {
+      navigate("/dashboard")
+    });
+
     return () => {
+      unsubscribeCloseRoom()
       unsubscribeHost();
       unsubscribeWhiteboard()
       unsubscribeRoomState()
@@ -111,7 +120,23 @@ export default function ClassRoom() {
   };
 
   const leaveClassRoom = () => {
-    console.log("you left the room");
+    // console.log("you left the room");
+    if(host){
+      sendMessage(JSON.stringify({
+        type: "HOST_LEAVE_ROOM",
+        roomId: roomId,
+        userId: localStorage.getItem("user-token-id")
+      }));
+    }else{
+
+      sendMessage(JSON.stringify({
+        type: "PARTICIPANT_LEAVE_ROOM",
+        roomId: roomId,
+        userId: localStorage.getItem("user-token-id")
+      }));
+    }
+
+    navigate("/dashboard", {})
   };
 
 
@@ -170,21 +195,20 @@ export default function ClassRoom() {
   }
 
   return (
-    <div className='w-full'>
+    <div className='w-full h-screen'>
       <LiveKitRoom
         video={true}
         audio={false}
         token={token}
         serverUrl={serverUrl}
-        onDisconnected={leaveClassRoom}
         data-lk-theme="default"
         style={{ height: '100vh' }}
         onLoad={sendEvent}
         onConnected={sendEvent}
       >
-        <div className="flex h-screen bg-zinc-900">
-          <div className="flex-1 flex flex-col">
-            <div className="flex-1 relative">
+        <div className="flex h-full w-full bg-zinc-900">
+          <div className="flex-1 w-full flex flex-col">
+            <div className="flex-1  w-full relative">
               {showWhiteboard ? (
                 <DrawingCanvas host={host} whiteboardState={whiteboardState} />
               ) : showSlides ? (
@@ -223,15 +247,21 @@ export default function ClassRoom() {
 
                 <button
                     onClick={handleClick}
-                    className={`px-4 py-2 rounded ${
+                    className={`px-4 py-2 flex items-center rounded ${
                       true ? 'bg-blue-600' : 'bg-zinc-700'
                     } text-white`}
                 >
                     <Upload className="mr-2 h-4 w-4" /> Upload Slides
                 </button>
               </div>}
-              <div className="flex-1">
-                <ControlBar/>
+              <div className={`flex ${host? "" : "w-full"} justify-center items-center`}>
+                {host && 
+                <ControlBar controls={{microphone : true, camera : true, screenShare : true, leave : false, settings : false, chat : false}} />
+                }
+                <DisconnectButton onClick={leaveClassRoom}>
+                  {<LeaveIcon />}
+                  {'Leave'}
+                </DisconnectButton>
               </div>
             </div>
           </div>
@@ -288,7 +318,7 @@ function ScreenShareView() {
   );
 
   return (
-    <div className="h-[44rem] bg-black">
+    <div className="h-full bg-black">
       {tracks.map((track, index) => (
         <ParticipantTile
           key={index}

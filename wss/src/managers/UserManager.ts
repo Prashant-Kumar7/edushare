@@ -108,14 +108,28 @@ export class UserManager {
             const room = this.getRoom(message.roomId);
             room?.drawPageEvent(socket, message);
         });
+
+        this.messageHandlers.set("PARTICIPANT_LEAVE_ROOM", (socket, message) => {
+            const room = this.getRoom(message.roomId);
+            room?.leave(socket, message);
+        });
+
+        this.messageHandlers.set("HOST_LEAVE_ROOM", (socket, message) => {
+            const room = this.getRoom(message.roomId);
+            room?.leave(socket, message);
+        });
     }
 
     async joinRoom(message: string):Promise<void> {
         const parsedMessage = JSON.parse(message);
         const userId: string = parsedMessage.userId;
         const room = this.getRoom(parsedMessage.roomId);
-        room?.joinHttp(userId);
-        await client.lPush(parsedMessage.processId, "JOINED");
+        if(room?.host.username === userId || room?.host.socket){
+            room?.joinHttp(userId);
+            await client.lPush(parsedMessage.processId, "JOINED");
+        }else {
+            await client.lPush(parsedMessage.processId, "ROOM_CLOSE");
+        }
     }
 
     async createRoom(message: string):Promise<void> {
@@ -124,8 +138,15 @@ export class UserManager {
         const room = new RoomManager(parsedMessage.roomId, userId);
         this.rooms.push(room);
         room.joinHttp(userId);
-        await client.lPush(parsedMessage.processId, "CREATED");
+        // await client.lPush(parsedMessage.processId, "CREATED");
     }
+
+    // async enterClassroom(message: string):Promise<void>{
+    //     const parsedMessage = JSON.parse(message);
+    //     const userId: string = parsedMessage.userId;
+    //     const room = this.getRoom(parsedMessage.roomId);
+    //     room?.joinHttp(userId);
+    // }
 
     addUser(socket: WebSocket): void {
         this.setupMessageHandler(socket);

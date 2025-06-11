@@ -67,7 +67,7 @@ export function SlidePresentation({ host, currentSlide, currentSlideState, slide
     useEffect(() => {
         const canvas = canvasRef.current;
         if (canvas) {
-            canvas.width = window.innerWidth * 0.8;
+            canvas.width = window.innerWidth * 0.77;
             canvas.height = window.innerHeight * 0.8;
             const ctx = canvas.getContext("2d");
             if (ctx) {

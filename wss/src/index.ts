@@ -11,13 +11,9 @@ const httpServer = app.listen(8080);
 const wss = new WebSocketServer({ server: httpServer });
 const users = new UserManager();
 
+
 export const client = createClient({
-    username: 'default',
-    password: process.env.REDIS_PASSWORD,
-    socket: {
-        host: process.env.REDIS_HOST,
-        port: Number(process.env.REDIS_PORT) || 13642
-    }
+  url: process.env.REDIS_URL
 });
 
 // Keep-alive ping
@@ -53,6 +49,9 @@ async function startQueue() {
                             break;
                         case "CREATE":
                             await users.createRoom(submission.element);
+                            break;
+                        case "ENTER_CLASSROOM":
+                            await users.joinRoom(submission.element);
                             break;
                         default:
                             console.warn("Unhandled Redis message type:", parsedMessage.type);

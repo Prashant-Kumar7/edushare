@@ -5,7 +5,7 @@ export class RoomManager {
     private participants: Users;
     public roomId: string;
     private roomState: RoomState;
-    private host: Host;
+    public host: Host;
     private usernames: string[];
     private messages: string[];
     private newSlide : string
@@ -178,6 +178,33 @@ export class RoomManager {
             type : "NEW_PAGE_STATE",
             state : this.roomState
         })
+    }
+
+
+    leave (socket : WebSocket,message : any){
+        if(socket === this.host.socket){
+            this.broadcastToOthers(this.host.socket, {
+                type : "ROOM_CLOSED"
+            })
+            this.participants = {};
+            this.newSlide = "https://csv-upload-22990.s3.ap-south-1.amazonaws.com/blank-white-7sn5o1woonmklx1h.jpg"
+            this.usernames = [];
+            this.host.socket = null
+            this.roomState = {
+                isPptActive: false,
+                isWhiteBoardActive: false,
+                whiteboardStrocks: "",
+                currentPage: 0,
+                listOfPages: [],
+                pageStrocksState: {},
+                isScreenShareActive: false
+            };
+            this.messages = [];
+        }else{
+            delete this.participants[message.userId]
+            const index = this.usernames.indexOf(message.userId);
+            this.usernames.splice(index, 1);
+        }
     }
 
     private broadcastToAll(message: any): void {

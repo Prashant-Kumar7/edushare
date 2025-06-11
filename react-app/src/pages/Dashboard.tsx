@@ -2,33 +2,28 @@ import { useEffect, useState } from 'react';
 import { Plus, Users, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { RoomCard } from '../components/RoomCard';
 
 interface Room {
-  id: string;
-  name: string;
-  description: string;
-  members: number;
+  room : {
+    id: string;
+    name: string;
+    description: string;
+  }
+  // members: number;
 }
 
 const Dashboard = () => {
-  // const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [roomName, setRoomName] = useState("")
+  const [roomDesc, setRoomDesc] = useState("")
   const [roomId, setRoomId] = useState("")
+  const [joinAsObserver, setJoinAsObserver] = useState(false);
+  const [role, setRole] = useState("")
+  const [name, setName] = useState("")
   const navigate = useNavigate();
-  const [rooms] = useState<Room[]>([
-    {
-      id: '1',
-      name: 'Mathematics 101',
-      description: 'Introduction to Calculus',
-      members: 25,
-    },
-    {
-      id: '2',
-      name: 'Physics Lab',
-      description: 'Advanced Physics Experiments',
-      members: 18,
-    },
-  ]);
+  const [rooms, setRooms] = useState<Room[]>([]);
 
   useEffect(()=>{
     const token = localStorage.getItem("token")
@@ -40,6 +35,9 @@ const Dashboard = () => {
       if(res.status !== 200){
         navigate("/error/"+res.data)
       }
+      setRole(res.data.user.role)
+      setName(res.data.user.name)
+      setRooms(res.data.rooms)
     }).catch((err)=>{
       console.log(err)
     })
@@ -47,7 +45,7 @@ const Dashboard = () => {
 
   const createRoom = ()=>{
     const token = localStorage.getItem("token")
-    axios.post("http://localhost:3000/api/v1/room/create-room", {} ,{
+    axios.post("http://localhost:3000/api/v1/room/create-room", {name :roomName, description : roomDesc} ,{
       headers : {
         Authorization  : `baerer ${token}`
       }
@@ -64,9 +62,15 @@ const Dashboard = () => {
     })
   }
 
-  const joinRoom = ()=>{
+  const joinRoom = async()=>{
+    if(joinAsObserver){
+      axios.post("") //<---- incomplete
+    }
     const token = localStorage.getItem("token")
-    axios.post("http://localhost:3000/api/v1/room/join-room",{roomId},{
+    axios.post("http://localhost:3000/api/v1/room/join-room",{
+      roomId,
+      addToMyClassroom: joinAsObserver
+    },{
       headers : {
         authorization : `baerer ${token}`
       }
@@ -78,8 +82,11 @@ const Dashboard = () => {
       console.log(err)
     })
     setRoomId("")
+    setJoinAsObserver(false)
     setShowJoinModal(false)
   }
+
+  
 
   const handleLogout = ()=>{
     localStorage.removeItem("token")
@@ -112,48 +119,32 @@ const Dashboard = () => {
             >
               Join Room
             </button>
-            <button
-              onClick={createRoom}
+            {(role=="TEACHER" || role==="ADMIN") &&
+              <button
+              onClick={() => setShowCreateModal(true)}
               className="flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
             >
               <Plus className="h-5 w-5 mr-2" />
               Create Room
             </button>
+            }
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {rooms.map((room) => (
-            <div key={room.id} className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <Users className="h-8 w-8 text-gray-400" />
-                  </div>
-                  <div className="ml-5">
-                    <h3 className="text-lg font-medium text-gray-900">{room.name}</h3>
-                    <p className="text-sm text-gray-500">{room.description}</p>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Users className="h-4 w-4 mr-1" />
-                    {room.members} members
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-50 px-4 py-4 sm:px-6">
-                <button className="text-sm font-medium text-blue-600 hover:text-blue-500">
-                  Enter Classroom
-                </button>
-              </div>
-            </div>
+          {rooms.map((room, index) => (
+            <RoomCard
+            key = {index}
+            description={room.room.description}
+            id={room.room.id}
+            name={room.room.name}
+            />
           ))}
         </div>
       </main>
 
       {/* Create Room Modal */}
-      {false && (
+      { showCreateModal&& (
         <div className="fixed z-10 inset-0 overflow-y-auto">
           <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div className="fixed inset-0 transition-opacity" aria-hidden="true">
@@ -171,10 +162,24 @@ const Dashboard = () => {
                       <input
                         required
                         type="text"
-                        value={roomId}
-                        onChange={(e)=>setRoomId(e.target.value)}
+                        value={roomName}
+                        onChange={(e)=>setRoomName(e.target.value)}
                         name="room-name"
                         id="room-name"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="room-name" className="block text-sm font-medium text-gray-700">
+                        Room Description
+                      </label>
+                      <input
+                        required
+                        type="text"
+                        value={roomDesc}
+                        onChange={(e)=>setRoomDesc(e.target.value)}
+                        name="room-description"
+                        id="room-description"
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
@@ -185,14 +190,14 @@ const Dashboard = () => {
                 <button
                   type="button"
                   className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2"
-                  // onClick={() => setShowCreateModal(false)}
+                  onClick={createRoom}
                 >
                   Create
                 </button>
                 <button
                   type="button"
                   className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1"
-                  // onClick={() => setShowCreateModal(false)}
+                  onClick={() => setShowCreateModal(false)}
                 >
                   Cancel
                 </button>
@@ -228,6 +233,19 @@ const Dashboard = () => {
                         placeholder="Enter room code"
                       />
                     </div>
+                    <div className="flex items-center">
+                      <input
+                        id="join-as-observer"
+                        name="join-as-observer"
+                        type="checkbox"
+                        checked={joinAsObserver}
+                        onChange={(e) => setJoinAsObserver(e.target.checked)}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="join-as-observer" className="ml-2 block text-sm text-gray-700">
+                        Add to my classroom
+                      </label>
+                    </div>
                   </form>
                 </div>
               </div>
@@ -242,7 +260,11 @@ const Dashboard = () => {
                 <button
                   type="button"
                   className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1"
-                  onClick={() => setShowJoinModal(false)}
+                  onClick={() => {
+                    setShowJoinModal(false);
+                    setRoomId("");
+                    setJoinAsObserver(false);
+                  }}
                 >
                   Cancel
                 </button>

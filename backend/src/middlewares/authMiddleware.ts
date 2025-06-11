@@ -30,7 +30,7 @@ export const verifyTokenMiddleware = async(req: Request, res: Response, next: Ne
             }
         }
         // @ts-ignore
-        req["userId"] = decoded // Attach decoded data to the request
+        // req["userId"] = decoded // Attach decoded data to the request
         next(); 
     } catch (error) {
         res.status(401).json('Invalid');
