@@ -126,9 +126,6 @@ export class UserManager {
         const room = this.getRoom(parsedMessage.roomId);
         if(room?.host.username === userId || room?.host.socket){
             room?.joinHttp(userId);
-            await client.lPush(parsedMessage.processId, "JOINED");
-        }else {
-            await client.lPush(parsedMessage.processId, "ROOM_CLOSE");
         }
     }
 
@@ -147,11 +144,7 @@ export class UserManager {
             this.rooms = this.rooms.filter((rm)=>{
                 return rm.roomId !== room.roomId
             })
-            await client.lPush(parsedMessage.processId, "ROOM_DELETED");
-        }else {
-            await client.lPush(parsedMessage.processId, "ROOM_DOESNOT_EXISTS");
         }
-        
     }
 
     addUser(socket: WebSocket): void {

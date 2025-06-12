@@ -50,5 +50,6 @@ model Room {
   id      String    @id
   name    String  
   description String
+  roomClosed  Boolean @default(false)
   userRoomManager  UserRoomManager[]
 }

@@ -12,6 +12,7 @@ interface RoomCardProps {
     description: string;
     key: number;
     role: boolean;
+    roomClosed : boolean
     onRoomUpdate: (id: string, name: string, description: string) => void;
     onRoomDelete: (id: string) => void;
     onRoomRemove: (id: string) => void;
@@ -23,6 +24,7 @@ export const RoomCard = ({
     name, 
     description, 
     role,
+    roomClosed,
     onRoomUpdate,
     onRoomDelete
 }: RoomCardProps) => {
@@ -142,18 +144,20 @@ export const RoomCard = ({
                         <div className="ml-6 flex-1">
                             <h3 className="text-lg font-semibold text-gray-900 mb-1">{name}</h3>
                             <p className="text-sm text-gray-600 leading-relaxed">{description}</p>
+                            <h4 className={`font-semibold text-sm  ${roomClosed? "text-red-600" : "text-green-600"}`}>{roomClosed? "Closed" : "Open"}</h4>
                         </div>
                     </div>
                 </div>
                 <div className="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-100">
                     <button 
+                        disabled = {roomClosed}
                         onClick={enterClassroom} 
                         className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
                         Enter Classroom
                     </button>
                     
-                    {!role?
+                    {role?
                     <div className="flex items-center space-x-2">
                         <button 
                             onClick={() => setIsEditModalOpen(true)}

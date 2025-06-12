@@ -29,7 +29,7 @@ export const verifyTokenMiddleware = async(req: Request, res: Response, next: Ne
                 return
             }
             // @ts-ignore
-            req["userId"] = decoded // Attach decoded data to the request
+            req["userId"] = decoded as string // Attach decoded data to the request
             // @ts-ignore
             req["userRole"] = data.role // Attach decoded data to the request
         }

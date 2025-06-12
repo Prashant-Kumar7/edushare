@@ -9,7 +9,6 @@ const secretKey = "secret";
 
 router.post("/create-room", verifyTokenMiddleware, async (req: Request, res: Response) => {
     const { name, description } : {name : string, description : string} = await req.body;
-    const processId = crypto.randomUUID() + Date.now().toString();
     const roomId = generateId();
     const authHeader = req.headers["authorization"];
     if (!authHeader) {
@@ -48,7 +47,7 @@ router.post("/create-room", verifyTokenMiddleware, async (req: Request, res: Res
     const id = `${userData.name}_${userData.id}`;
     const roomToken = await generateHostToken(roomId, id);
 
-    await client.lPush("room", JSON.stringify({ type: "CREATE", roomId: roomId, roomToken, processId, userId : id}));
+    await client.lPush("room", JSON.stringify({ type: "CREATE", roomId: roomId, roomToken, userId : id}));
     // await client.brPop(processId, 0);
     await prisma.room.create({
         data : {
@@ -69,7 +68,6 @@ router.post("/create-room", verifyTokenMiddleware, async (req: Request, res: Res
 
 router.post("/join-room",verifyTokenMiddleware , async (req: Request, res: Response) => {
     const { roomId, addToMyClassroom } : {roomId : string, addToMyClassroom : boolean} = await req.body;
-    const processId = crypto.randomUUID() + Date.now().toString();
     const authHeader = req.headers["authorization"];
     if (!authHeader) {
         res.status(401).json({ message: "Authorization header is missing" });
@@ -121,14 +119,13 @@ router.post("/join-room",verifyTokenMiddleware , async (req: Request, res: Respo
             })
         }
     }
-    await client.lPush("room", JSON.stringify({ type: "JOIN", roomId: roomId, roomToken, processId, userId : id, role : userData.role==="TEACHER"}));
+    await client.lPush("room", JSON.stringify({ type: "JOIN", roomId: roomId, roomToken, userId : id, role : userData.role==="TEACHER"}));
     // await client.brPop(processId, 0);
     res.json({ roomToken, roomId, userId:id });
 });
 
 router.post("/enter-classroom",verifyTokenMiddleware, async (req: Request, res: Response) => {
     const { roomId } = await req.body;
-    const processId = crypto.randomUUID() + Date.now().toString();
     const authHeader = req.headers["authorization"];
     if (!authHeader) {
         res.status(401).json({ message: "Authorization header is missing" });
@@ -157,22 +154,15 @@ router.post("/enter-classroom",verifyTokenMiddleware, async (req: Request, res: 
     const id = `${userData.name}_${userData.id}`;
     const roomToken = userRoomData[0].roomToken
 
-    await client.lPush("room", JSON.stringify({ type: "ENTER_CLASSROOM", roomId: roomId, roomToken, processId, userId : id, role : userData.role==="TEACHER"}));
-    const resposne = await client.brPop(processId, 0);
-    if(resposne?.element === "JOINED"){
-        res.json({ roomToken, roomId, userId:id });
-        return
-    }else if(resposne?.element ==="ROOM_CLOSE"){
-        res.json({ err : resposne?.element });
-    }
+    await client.lPush("room", JSON.stringify({ type: "ENTER_CLASSROOM", roomId: roomId, roomToken, userId : id, role : userData.role==="TEACHER"}));
+    // const resposne = await client.brPop(processId, 0);
+    res.json({ roomToken, roomId, userId:id });
 });
 
 
 router.delete("/:roomId",verifyTokenMiddleware, verifyDeleteUpdateMiddleware, async(req : Request, res : Response)=>{
     const {roomId} = req.params
-    const processId = crypto.randomUUID() + Date.now().toString();
     try {
-
         await prisma.userRoomManager.deleteMany({
             where : {
                 roomId : roomId
@@ -186,14 +176,9 @@ router.delete("/:roomId",verifyTokenMiddleware, verifyDeleteUpdateMiddleware, as
         })
 
         await client.lPush("room", JSON.stringify({ type: "DELETE_CLASSROOM", roomId: roomId}));
-        const resposne = await client.brPop(processId, 0);
-        if(resposne?.element === "JOINED"){
-            res.status(200).json("Delete Room")
-            return
-        }else if(resposne?.element ==="ROOM_CLOSE"){
-            res.status(200).json("Room doesn't exsits")
-            return
-        }
+        res.status(200).json("Delete Room")
+        return
+        
     } catch (error) {
         res.status(500).json("db error")
         return
@@ -260,6 +245,31 @@ router.put("/:roomId", verifyTokenMiddleware, async(req : Request, res : Respons
         return
     }
 })
+
+router.get("/status", verifyTokenMiddleware, async(req : Request, res : Response)=>{
+    // @ts-ignore
+    const userId = req["userId"]
+
+    const userRoomData = await prisma.userRoomManager.findMany({
+        where: {
+            userId: userId
+        },
+        select: {
+            room: {
+                select: {
+                    name: true,
+                    description: true,
+                    id: true
+                }
+            }
+        }
+    })
+
+    res.status(200).json({
+        rooms : userRoomData
+    })
+})
+
 
 
 export default router;

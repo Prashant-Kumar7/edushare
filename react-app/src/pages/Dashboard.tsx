@@ -9,6 +9,7 @@ interface Room {
     id: string;
     name: string;
     description: string;
+    roomClosed : boolean
   }
   // members: number;
 }
@@ -42,6 +43,22 @@ const Dashboard = () => {
     }).catch((err)=>{
       console.log(err)
     })
+
+    const timer = setInterval(() => {
+      axios.get("https://edushare-backend-1qcc.onrender.com/api/v1/room/status" , {
+        headers : {
+          Authorization  : `baerer ${token}`
+        }
+      }).then((res)=>{
+        setRooms(res.data.rooms)
+      }).catch((err)=>{
+        console.log(err)
+      })  
+    }, 5000);
+
+    return ()=>{
+      clearInterval(timer)
+    }
   },[])
 
   const createRoom = ()=>{
@@ -165,7 +182,8 @@ const Dashboard = () => {
             description={room.room.description}
             id={room.room.id}
             name={room.room.name}
-            role={role==="STUDENT" || role === "ADMIN"}
+            role={role==="TEACHER" || role === "ADMIN"}
+            roomClosed={room.room.roomClosed}
             onRoomDelete={onRoomDelete}
             onRoomRemove={onRoomRemove}
             onRoomUpdate={onRoomUpdate}

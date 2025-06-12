@@ -1,9 +1,11 @@
 import { WebSocket } from 'ws';
 import { RoomState, Users, Host, WebSocketMessage } from '../types';
+import prisma from '../db';
 
 export class RoomManager {
     private participants: Users;
     public roomId: string;
+    public roomClosed : boolean
     private roomState: RoomState;
     public host: Host;
     private usernames: string[];
@@ -12,6 +14,7 @@ export class RoomManager {
 
     constructor(roomId: string, hostName: string) {
         this.participants = {};
+        this.roomClosed = true
         this.newSlide = "https://csv-upload-22990.s3.ap-south-1.amazonaws.com/blank-white-7sn5o1woonmklx1h.jpg"
         this.roomId = roomId;
         this.usernames = [];
@@ -47,10 +50,21 @@ export class RoomManager {
         this.usernames.push(username);
     }
 
-    join(username: string, socket: WebSocket): void {
+    async join(username: string, socket: WebSocket): Promise<void> {
         if (this.host.username === username) {
             this.host.socket = socket;
+            this.roomClosed = false
+            await prisma.room.update({
+                data : {
+                    roomClosed : false, 
+                },
+                where : {
+                    id : this.roomId
+                }
+            })
         }
+
+        
 
         socket.send(JSON.stringify({ type: "HOST", username: this.host.username }));
         this.participants[username] = socket;
@@ -181,15 +195,26 @@ export class RoomManager {
     }
 
 
-    leave (socket : WebSocket,message : any){
+    async leave (socket : WebSocket,message : any){
         if(socket === this.host.socket){
             this.broadcastToOthers(this.host.socket, {
                 type : "ROOM_CLOSED"
             })
+
+            await prisma.room.update({
+                data : {
+                    roomClosed : true, 
+                },
+                where : {
+                    id : this.roomId
+                }
+            })
+
             this.participants = {};
             this.newSlide = "https://csv-upload-22990.s3.ap-south-1.amazonaws.com/blank-white-7sn5o1woonmklx1h.jpg"
             this.usernames = [];
             this.host.socket = null
+            this.roomClosed = true
             this.roomState = {
                 isPptActive: false,
                 isWhiteBoardActive: false,
