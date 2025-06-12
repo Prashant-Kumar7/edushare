@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 
-const WS_URL = "ws://localhost:8080"; // Replace with your WebSocket server URL
+const WS_URL = "wss://edushare-wss.onrender.com"; // Replace with your WebSocket server URL
 
 interface WebSocketContextType {
   sendMessage: (message: string) => void;

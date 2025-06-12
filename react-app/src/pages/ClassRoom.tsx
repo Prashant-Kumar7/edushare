@@ -172,7 +172,7 @@ export default function ClassRoom() {
     if (file) {
         const formData = new FormData();
         formData.append("file", file);
-        axios.post("http://localhost:3000/api/v1/file/upload", formData, {
+        axios.post("https://edushare-backend-1qcc.onrender.com/api/v1/file/upload", formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
                 "Authorization": `Bearer ${localStorage.getItem("token")}`

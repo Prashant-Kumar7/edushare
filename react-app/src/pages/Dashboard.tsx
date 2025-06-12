@@ -27,7 +27,7 @@ const Dashboard = () => {
 
   useEffect(()=>{
     const token = localStorage.getItem("token")
-    axios.get("http://localhost:3000/api/v1/auth/user", {
+    axios.get("https://edushare-backend-1qcc.onrender.com/api/v1/auth/user", {
       headers : {
         Authorization  : `baerer ${token}`
       }
@@ -45,7 +45,7 @@ const Dashboard = () => {
 
   const createRoom = ()=>{
     const token = localStorage.getItem("token")
-    axios.post("http://localhost:3000/api/v1/room/create-room", {name :roomName, description : roomDesc} ,{
+    axios.post("https://edushare-backend-1qcc.onrender.com/api/v1/room/create-room", {name :roomName, description : roomDesc} ,{
       headers : {
         Authorization  : `baerer ${token}`
       }
@@ -67,7 +67,7 @@ const Dashboard = () => {
       axios.post("") //<---- incomplete
     }
     const token = localStorage.getItem("token")
-    axios.post("http://localhost:3000/api/v1/room/join-room",{
+    axios.post("https://edushare-backend-1qcc.onrender.com/api/v1/room/join-room",{
       roomId,
       addToMyClassroom: joinAsObserver
     },{

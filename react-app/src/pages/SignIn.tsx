@@ -9,7 +9,7 @@ const SignIn = () => {
   const navigate = useNavigate();
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    axios.post("http://localhost:3000/api/v1/auth/signin", {email , password}).then((res)=>{
+    axios.post("https://edushare-backend-1qcc.onrender.com/api/v1/auth/signin", {email , password}).then((res)=>{
       localStorage.setItem("token", res.data.token)
       navigate("/dashboard")
     }).catch((err)=>{

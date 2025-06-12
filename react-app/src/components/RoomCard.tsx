@@ -33,7 +33,7 @@ export const RoomCard = ({
 
     const enterClassroom = () => {
         const token = localStorage.getItem("token");
-        axios.post("http://localhost:3000/api/v1/room/enter-classroom", 
+        axios.post("https://edushare-backend-1qcc.onrender.com/api/v1/room/enter-classroom", 
             { roomId: id }, 
             {
                 headers: {
@@ -58,7 +58,7 @@ export const RoomCard = ({
         
         try {
             const response = await axios.put(
-                `http://localhost:3000/api/v1/room/${id}`,
+                `https://edushare-backend-1qcc.onrender.com/api/v1/room/${id}`,
                 { 
                     name: newName, 
                     description: newDescription 
@@ -86,7 +86,7 @@ export const RoomCard = ({
         
         try {
             const response = await axios.delete(
-                `http://localhost:3000/api/v1/room/${id}`,
+                `https://edushare-backend-1qcc.onrender.com/api/v1/room/${id}`,
                 {
                     headers: {
                         authorization: `bearer ${token}`
@@ -110,7 +110,7 @@ export const RoomCard = ({
         const token = localStorage.getItem("token");
         try {
             const response = await axios.delete(
-                `http://localhost:3000/api/v1/room/remove/${id}`,
+                `https://edushare-backend-1qcc.onrender.com/api/v1/room/remove/${id}`,
                 {
                     headers: {
                         authorization: `bearer ${token}`
