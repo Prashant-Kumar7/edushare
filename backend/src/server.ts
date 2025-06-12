@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import express from "express";
+import express , {Response, Request} from "express";
 import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import roomRoutes from "./routes/roomRoutes.js";
@@ -20,6 +20,10 @@ app.use(cors());
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/room", roomRoutes);
 app.use("/api/v1/file", fileRoutes); // Ensure this is included
+
+app.get("/",(req : Request, res : Response)=>{
+    res.json("hello from eduShare http sever ")
+})
 
 app.listen(process.env.PORT || 3000, () => {
     console.log(`Server is running on port ${process.env.PORT || 3000}`);
