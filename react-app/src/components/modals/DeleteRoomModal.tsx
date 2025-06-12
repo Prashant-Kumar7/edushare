@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { Modal } from './Modal';
 import { Trash2, AlertTriangle, Loader } from 'lucide-react';
 

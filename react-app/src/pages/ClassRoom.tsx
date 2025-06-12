@@ -96,7 +96,7 @@ export default function ClassRoom() {
       }));
     });
 
-    const unsubscribeCloseRoom = addMessageListener("ROOM_CLOSED", (data) => {
+    const unsubscribeCloseRoom = addMessageListener("ROOM_CLOSED", () => {
       navigate("/dashboard")
     });
 

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { Upload } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import {  useRef } from "react";
 
 export const UploadSlides = ()=>{
 

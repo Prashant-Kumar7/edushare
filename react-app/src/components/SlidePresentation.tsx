@@ -17,7 +17,7 @@ export function SlidePresentation({ host, currentSlide, currentSlideState, slide
     const [color, setColor] = useState("#000000");
     const [size, setSize] = useState(5);
     // const [isErasing, setIsErasing] = useState(false);
-    const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
+    // const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
     const [currentPage, setCurrentPage] = useState(0);
     // const [pageStrokes, setPageStrokes] = useState<{ [key: number]: string }>({});
 
@@ -189,7 +189,8 @@ export function SlidePresentation({ host, currentSlide, currentSlideState, slide
     };
 
     const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        setCursorPos({ x: e.clientX, y: e.clientY });
+        // setCursorPos({ x: e.clientX, y: e.clientY });
+        console.log(e)
     };
 
     const changePage = (newPage: number) => {
@@ -209,14 +210,14 @@ export function SlidePresentation({ host, currentSlide, currentSlideState, slide
         }
     };
 
-    const handleAddingNewPages = ()=>{
-        console.log("new page button clicked")
-        sendMessage(JSON.stringify({ 
-            type: "ADD_NEW_SLIDE", 
-            roomId,
-            currentPage  
-        }));
-    }
+    // const handleAddingNewPages = ()=>{
+    //     console.log("new page button clicked")
+    //     sendMessage(JSON.stringify({ 
+    //         type: "ADD_NEW_SLIDE", 
+    //         roomId,
+    //         currentPage  
+    //     }));
+    // }
 
 
     

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Users, LogOut } from 'lucide-react';
+import { Plus,  LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { RoomCard } from '../components/RoomCard';
@@ -37,6 +37,7 @@ const Dashboard = () => {
       }
       setRole(res.data.user.role)
       setName(res.data.user.name)
+      console.log(name)
       setRooms(res.data.rooms)
     }).catch((err)=>{
       console.log(err)
