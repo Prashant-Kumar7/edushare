@@ -138,15 +138,21 @@ export class UserManager {
         const room = new RoomManager(parsedMessage.roomId, userId);
         this.rooms.push(room);
         room.joinHttp(userId);
-        // await client.lPush(parsedMessage.processId, "CREATED");
     }
 
-    // async enterClassroom(message: string):Promise<void>{
-    //     const parsedMessage = JSON.parse(message);
-    //     const userId: string = parsedMessage.userId;
-    //     const room = this.getRoom(parsedMessage.roomId);
-    //     room?.joinHttp(userId);
-    // }
+    async deleteRoom(message : string) : Promise<void> {
+        const parsedMessage = JSON.parse(message);
+        const room = this.getRoom(parsedMessage.roomId);
+        if(room){
+            this.rooms = this.rooms.filter((rm)=>{
+                return rm.roomId !== room.roomId
+            })
+            await client.lPush(parsedMessage.processId, "ROOM_DELETED");
+        }else {
+            await client.lPush(parsedMessage.processId, "ROOM_DOESNOT_EXISTS");
+        }
+        
+    }
 
     addUser(socket: WebSocket): void {
         this.setupMessageHandler(socket);

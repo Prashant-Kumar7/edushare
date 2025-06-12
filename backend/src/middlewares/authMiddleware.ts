@@ -25,15 +25,29 @@ export const verifyTokenMiddleware = async(req: Request, res: Response, next: Ne
             })
 
             if(!data){
-                res.status(400).json('Unauthorized');
+                res.status(400).json('User Does exist');
                 return
             }
+            // @ts-ignore
+            req["userId"] = decoded // Attach decoded data to the request
+            // @ts-ignore
+            req["userRole"] = data.role // Attach decoded data to the request
         }
-        // @ts-ignore
-        // req["userId"] = decoded // Attach decoded data to the request
         next(); 
     } catch (error) {
         res.status(401).json('Invalid');
         return
     }
+};
+
+
+export const verifyDeleteUpdateMiddleware = async(req: Request, res: Response, next: NextFunction) :  Promise<void> => {
+    // @ts-ignore
+    const userRole = req["userRole"]
+    
+    if(userRole === "STUDENT"){
+        res.status(400).json('Unauthorized');
+        return
+    }
+    next(); 
 };

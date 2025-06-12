@@ -86,7 +86,33 @@ const Dashboard = () => {
     setShowJoinModal(false)
   }
 
-  
+  const onRoomDelete = (id : string)=>{
+    setRooms((prev)=>{
+      return prev.filter((rm)=>{
+        return rm.room.id !== id
+      })
+    })
+  }
+
+  const onRoomRemove = (id : string)=>{
+    setRooms((prev)=>{
+      return prev.filter((rm)=>{
+        return rm.room.id !== id
+      })
+    })
+  }
+
+  const onRoomUpdate = (id : string,newName : string, newDescription : string)=>{
+    setRooms((prev)=>{
+      return prev.map((rm)=>{
+        if(rm.room.id === id){
+          rm.room.name = newName
+          rm.room.description = newDescription
+        }
+        return rm
+      })
+    })
+  }
 
   const handleLogout = ()=>{
     localStorage.removeItem("token")
@@ -138,6 +164,10 @@ const Dashboard = () => {
             description={room.room.description}
             id={room.room.id}
             name={room.room.name}
+            role={role==="STUDENT" || role === "ADMIN"}
+            onRoomDelete={onRoomDelete}
+            onRoomRemove={onRoomRemove}
+            onRoomUpdate={onRoomUpdate}
             />
           ))}
         </div>

@@ -53,6 +53,9 @@ async function startQueue() {
                         case "ENTER_CLASSROOM":
                             await users.joinRoom(submission.element);
                             break;
+                        case "DELETE_CLASSROOM":
+                            await users.deleteRoom(submission.element);
+                            break;
                         default:
                             console.warn("Unhandled Redis message type:", parsedMessage.type);
                     }
