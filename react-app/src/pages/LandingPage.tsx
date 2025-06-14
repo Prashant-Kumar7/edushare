@@ -1,7 +1,32 @@
 import { Link } from 'react-router-dom';
 import { GraduationCap, Users, BookOpen, PenTool } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+
+
+  
 
 const LandingPage = () => {
+
+  const [loggedIn, setLoggedIn] = useState(false)
+
+  useEffect(()=>{
+    const token = localStorage.getItem("token")
+    if(token)
+    axios.get("https://edushare-backend-1qcc.onrender.com/api/v1/auth/user", {
+      headers : {
+        Authorization  : `baerer ${token}`
+      }
+    }).then((res)=>{
+      if(res.status === 200){
+        setLoggedIn(true)
+      }
+      
+    }).catch((err)=>{
+      console.log(err)
+    })
+  },[])
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <nav className="bg-white shadow-sm">
@@ -12,7 +37,7 @@ const LandingPage = () => {
               <span className="ml-2 text-xl font-bold text-gray-900">EduShare</span>
             </div>
             <div className="flex items-center space-x-4">
-              <Link to="/auth/signin" className="text-gray-600 hover:text-gray-900">Sign In</Link>
+              {loggedIn? <Link to="/dashboard" className="text-gray-600 hover:text-gray-900">Dashboard</Link> : <Link to="/auth/signin" className="text-gray-600 hover:text-gray-900">Sign In</Link>}
               <Link to="/auth/signup" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
                 Sign Up
               </Link>
