@@ -119,9 +119,16 @@ router.post("/join-room",verifyTokenMiddleware , async (req: Request, res: Respo
             })
         }
     }
+
+    const roomData = await prisma.room.findUnique({
+        where : {
+            id : roomId
+        }
+    })
+
     await client.lPush("room", JSON.stringify({ type: "JOIN", roomId: roomId, roomToken, userId : id, role : userData.role==="TEACHER"}));
     // await client.brPop(processId, 0);
-    res.json({ roomToken, roomId, userId:id });
+    res.json({ roomToken, userId:id, roomData });
 });
 
 router.post("/enter-classroom",verifyTokenMiddleware, async (req: Request, res: Response) => {

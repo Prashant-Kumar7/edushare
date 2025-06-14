@@ -99,9 +99,23 @@ const Dashboard = () => {
         authorization : `baerer ${token}`
       }
     }).then((res)=>{
+      
       localStorage.setItem("room-token", res.data.roomToken)
       localStorage.setItem("user-token-id", res.data.userId)
-      navigate("/room/"+res.data.roomId)
+      const room : Room = {
+        room: {
+          id: res.data.roomData.id,
+          name: res.data.roomData.name,
+          description: res.data.roomData.description,
+          roomClosed: res.data.roomData.roomClosed
+        }
+      }
+      if(res.data.roomData.roomClosed){
+        alert("Room Closed")
+      }else {
+        navigate("/room/"+res.data.roomId)
+      }
+      setRooms([...rooms , room])
     }).catch((err)=>{
       console.log(err)
     })
