@@ -126,7 +126,9 @@ router.post("/join-room",verifyTokenMiddleware , async (req: Request, res: Respo
         }
     })
 
-    await client.lPush("room", JSON.stringify({ type: "JOIN", roomId: roomId, roomToken, userId : id, role : userData.role==="TEACHER"}));
+    if(!roomData?.roomClosed){
+        await client.lPush("room", JSON.stringify({ type: "JOIN", roomId: roomId, roomToken, userId : id, role : userData.role==="TEACHER"}));
+    }
     // await client.brPop(processId, 0);
     res.json({ roomToken, userId:id, roomData });
 });
