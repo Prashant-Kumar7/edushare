@@ -150,7 +150,7 @@ export const RoomCard = ({
                 </div>
                 <div className="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-100">
                     <button 
-                        disabled = { role || roomClosed}
+                        disabled = { role ?false : true}
                         onClick={enterClassroom} 
                         className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
