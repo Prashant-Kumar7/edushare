@@ -210,7 +210,7 @@ const app = express();
 
 app.get('/', (_, res : Response) =>{res.send('Worker is alive!')} ); // For UptimeRobot
 
-const port = process.env.PORT || 3000;
+const port = 3000;
 app.listen(port, () => {
   console.log(`Dummy HTTP server running on port ${port}`);
 });
