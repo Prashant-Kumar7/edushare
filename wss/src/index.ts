@@ -17,20 +17,27 @@ export const client = createClient({
 });
 
 // Keep-alive ping
-const pingInterval = 30000; // 30 seconds
+const pingInterval = 5000;
 const pingAllClients = () => {
+    const dataset = users.rooms.reduce((acc, room) => {
+        acc[room.roomId] = room.roomClosed;
+        return acc;
+    }, {} as Record<string, boolean>);
     wss.clients.forEach((socket: WebSocket) => {
         if (socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: "ping" }));
+            socket.send(JSON.stringify({ type: "ping"}));
+            socket.send(JSON.stringify({ type: "ROOM_DATA" , roomData : dataset}));
         }
     });
 };
+
+users.sendRooms(wss)
 
 wss.on("connection", (ws) => {
     users.addUser(ws);
 });
 
-setInterval(pingAllClients, pingInterval);
+const timer = setInterval(pingAllClients, pingInterval);
 
 async function startQueue() {
     try {
@@ -71,6 +78,7 @@ async function startQueue() {
 }
 
 startQueue().catch(error => {
+    clearInterval(timer)
     console.error("Fatal error in queue processing:", error);
     process.exit(1);
 });
@@ -79,6 +87,7 @@ startQueue().catch(error => {
 process.on('SIGTERM', () => {
     console.log('SIGTERM received. Closing server...');
     httpServer.close(() => {
+        clearInterval(timer)
         console.log('HTTP server closed');
         client.quit();
         process.exit(0);

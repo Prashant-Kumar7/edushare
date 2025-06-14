@@ -3,6 +3,7 @@ import { Plus,  LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { RoomCard } from '../components/RoomCard';
+import { useWebSocket } from '../components/WebSocketProvider';
 
 interface Room {
   room : {
@@ -17,6 +18,8 @@ interface Room {
 const Dashboard = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const { addMessageListener } = useWebSocket();
+  
   const [roomName, setRoomName] = useState("")
   const [roomDesc, setRoomDesc] = useState("")
   const [roomId, setRoomId] = useState("")
@@ -43,23 +46,26 @@ const Dashboard = () => {
     }).catch((err)=>{
       console.log(err)
     })
+  },[])
 
-    const timer = setInterval(() => {
-      axios.get("https://edushare-backend-1qcc.onrender.com/api/v1/room/status" , {
-        headers : {
-          Authorization  : `baerer ${token}`
-        }
-      }).then((res)=>{
-        setRooms(res.data.rooms)
-      }).catch((err)=>{
-        console.log(err)
-      })  
-    }, 5000);
+  useEffect(()=>{
+
+    const unsubscribeRoomData = addMessageListener("ROOM_DATA", (data) => {
+      const roomData = data.roomData
+      setRooms((prev)=>{
+        return prev.map((rm)=>{
+          if(rm.room.roomClosed !== roomData[rm.room.id]){
+            rm.room.roomClosed = roomData[rm.room.id]
+          }
+          return rm
+        })
+      })
+    });
 
     return ()=>{
-      clearInterval(timer)
+      unsubscribeRoomData()
     }
-  },[])
+  },[addMessageListener])
 
   const createRoom = ()=>{
     const token = localStorage.getItem("token")

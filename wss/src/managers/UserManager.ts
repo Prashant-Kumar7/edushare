@@ -1,10 +1,10 @@
-import { WebSocket } from 'ws';
+import { Server, WebSocket } from 'ws';
 import { RoomManager } from './RoomManager';
 import { WebSocketMessage, MessageHandler } from '../types';
 import {client} from "../index"
 
 export class UserManager {
-    private rooms: RoomManager[];
+    public rooms: RoomManager[];
     private messageHandlers: Map<string, MessageHandler>;
 
     constructor() {
@@ -149,6 +149,19 @@ export class UserManager {
 
     addUser(socket: WebSocket): void {
         this.setupMessageHandler(socket);
+    }
+
+
+    sendRooms(wss : Server){
+        const dataset = this.rooms.reduce((acc, room) => {
+          acc[room.roomId] = room.roomClosed;
+          return acc;
+        }, {} as Record<string, boolean>);
+
+
+        wss.clients.forEach((client)=>{
+
+        })
     }
 
     private getRoom(roomId: string): RoomManager | undefined {
