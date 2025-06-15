@@ -7,6 +7,9 @@ import { UserManager } from "./managers/UserManager";
 dotenv.config();
 
 const app = express();
+app.get("/",(_,res)=>{
+    res.json("hello from edushare websocket server")
+})
 const httpServer = app.listen(8080);
 const wss = new WebSocketServer({ server: httpServer });
 const users = new UserManager();
