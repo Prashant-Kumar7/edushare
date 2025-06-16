@@ -113,7 +113,7 @@ const Dashboard = () => {
       if(res.data.roomData.roomClosed){
         alert("Room Closed")
       }else {
-        navigate("/room/"+res.data.roomId)
+        navigate("/room/"+res.data.roomData.id)
       }
       setRooms([...rooms , room])
     }).catch((err)=>{
